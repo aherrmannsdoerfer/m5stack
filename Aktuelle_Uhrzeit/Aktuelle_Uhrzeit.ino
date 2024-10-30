@@ -4,8 +4,8 @@
 #include <WiFiUdp.h>        // UDP-Bibliothek, erforderlich für NTP
 
 // WLAN-Zugangsdaten
-const char* ssid = "XiaomiT11";         // WLAN-SSID hier einfügen
-const char* password = "Andreas2110"; // WLAN-Passwort hier einfügen
+const char* ssid = "WLAN_NAME";         // WLAN-SSID hier einfügen
+const char* password = "WLAN_PASSWORT"; // WLAN-Passwort hier einfügen
 
 // NTP-Client-Setup
 WiFiUDP ntpUDP;                           // UDP-Objekt für die Kommunikation
