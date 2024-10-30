@@ -4,8 +4,8 @@
 #include <WiFiUdp.h>        // UDP-Bibliothek, erforderlich für NTP
 
 // WLAN-Zugangsdaten
-const char* ssid = "Xiaomi11T";         
-const char* password = "Andreas2110"; 
+const char* ssid = "WLAN NAME";         
+const char* password = "WLAN PASSWORD"; 
 
 // NTP-Client-Setup
 WiFiUDP ntpUDP;                              
@@ -57,10 +57,14 @@ void loop() {
         triggerAlarm();
     }
 
-    // Touchscreen-Eingabe zur separaten Einstellung der Stunden und Minuten
+    // Überprüfen, ob Tasten berührt werden
     if (M5.Touch.ispressed()) {
-        setAlarm();
+        Point touchPoint = M5.Touch.getPressPoint(); // Koordinaten des Touchpunkts abrufen
+        handleTouch(touchPoint);
     }
+
+    // Buttons anzeigen
+    drawButtons();
 
     delay(1000); // Aktualisierung jede Sekunde
 }
@@ -75,22 +79,42 @@ void triggerAlarm() {
     M5.Lcd.println("ALARM!");
 }
 
-// Funktion zum Setzen der Weckzeit durch Touch-Eingabe
-void setAlarm() {
-    Point touchPoint = M5.Touch.getPressPoint();  // Koordinaten des Touchpunkts abrufen
+// Funktion zum Deaktivieren des Alarms
+void disableAlarm() {
+    alarmTriggered = false; // Alarm zurücksetzen
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setCursor(20, 50);
+    M5.Lcd.setTextColor(WHITE);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.println("Alarm Deactivated");
+    delay(2000); // Zeige Nachricht für 2 Sekunden an
+}
 
-    // Bereich zum Erhöhen der Stunde (linker oberer Bildschirmbereich)
-    if (touchPoint.x < 160 && touchPoint.y < 120) {
+// Funktion zur Handhabung der Touch-Eingabe
+void handleTouch(Point touchPoint) {
+    // Touch-Bereich für die linke Taste (Alarmstunde erhöhen)
+    if (touchPoint.x < 107 && touchPoint.y > 200) { // Linke untere Ecke
         alarmHour = (alarmHour + 1) % 24;  // Stunde erhöhen
-        alarmTriggered = false; // Alarm zurücksetzen
+        alarmSet = true; // Alarm wird gesetzt
     }
-    // Bereich zum Erhöhen der Minute (linker unterer Bildschirmbereich)
-    else if (touchPoint.x < 160 && touchPoint.y >= 120) {
+    // Touch-Bereich für die mittlere Taste (Alarmminute erhöhen)
+    else if (touchPoint.x >= 107 && touchPoint.x < 213 && touchPoint.y > 200) { // Mittlere untere Ecke
         alarmMinute = (alarmMinute + 1) % 60; // Minute erhöhen
-        alarmTriggered = false; // Alarm zurücksetzen
+        alarmSet = true; // Alarm wird gesetzt
+    }
+    // Touch-Bereich für die rechte Taste (Alarm ausschalten)
+    else if (touchPoint.x >= 213 && touchPoint.y > 200) { // Rechte untere Ecke
+        if (alarmTriggered) {
+            disableAlarm();
+        }
     }
 
     // Aktualisiere die Anzeige für die neue Weckzeit
+    updateDisplay();
+}
+
+// Funktion zur Aktualisierung der Anzeige
+void updateDisplay() {
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(20, 50);
     M5.Lcd.setTextColor(WHITE);
@@ -99,7 +123,23 @@ void setAlarm() {
 
     M5.Lcd.setCursor(20, 100);
     M5.Lcd.printf("New Alarm: %02d:%02d", alarmHour, alarmMinute);
+}
 
-    alarmSet = true;
-    delay(500); // kleine Verzögerung zur Vermeidung doppelter Berührungen
+// Funktion zum Zeichnen der Buttons
+void drawButtons() {
+    M5.Lcd.fillRect(0, 200, 80, 40, BLUE); // Linker Button
+    M5.Lcd.fillRect(107, 200, 107, 40, GREEN); // Mittlerer Button
+    M5.Lcd.fillRect(213, 200, 107, 40, RED); // Rechter Button
+
+    // Buttontexte
+    M5.Lcd.setCursor(20, 210);
+    M5.Lcd.setTextColor(WHITE);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.print("Stunde +"); // Text für linken Button
+
+    M5.Lcd.setCursor(130, 210);
+    M5.Lcd.print("Minute +"); // Text für mittleren Button
+
+    M5.Lcd.setCursor(230, 210);
+    M5.Lcd.print("Alarm Off"); // Text für rechten Button
 }
